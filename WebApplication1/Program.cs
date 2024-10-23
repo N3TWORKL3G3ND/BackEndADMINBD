@@ -1,20 +1,51 @@
+using Logica.Models;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configuración de CORS para permitir cualquier origen
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
 
+// Configuración de la conexión a la base de datos Oracle
+builder.Services.AddDbContext<AdminContext>(options =>
+    options.UseOracle(builder.Configuration.GetConnectionString("OracleDbConnection")));
+
+// Registra el servicio ControlTablespaces
+builder.Services.AddScoped<ControlTablespaces>();
+
+// Agregar servicios al contenedor.
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// Configuración de Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configuración del pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    // Puedes habilitar Swagger también en producción si lo necesitas
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// Habilitar CORS
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
