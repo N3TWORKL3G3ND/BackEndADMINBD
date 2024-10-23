@@ -1,4 +1,6 @@
 ﻿using Logica.Models;
+using Logica.Requests;
+
 //using Logica.Requests;
 using Logica.Responses;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +35,32 @@ namespace BackEndADMINBD.Controllers
                 return BadRequest(string.Join(", ", res.errores));
             }
         }
+
+
+
+        [HttpPost]
+        [Route("API/Tablespaces/EliminarTablespace")]
+        public async Task<IActionResult> EliminarTablespace([FromBody] ReqEliminarTablespace req)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ningun campo puede estar vacío.");  // Devuelve errores si el JSON no contiene los campos correctos
+            }
+            
+
+            ResEliminarTablespace res = await _controlTablespaces.EliminarTablespace(req.nombre);
+
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(string.Join(", ", res.errores));
+            }
+        }
+
 
 
     }

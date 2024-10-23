@@ -50,5 +50,47 @@ public class AdminContext : DbContext
         }
     }
 
+
+
+    public async Task<bool> EliminarTablespaceAsync(string nombre)
+    {
+        var query = $"DROP TABLESPACE {nombre} INCLUDING CONTENTS AND DATAFILES";
+
+        using (var connection = Database.GetDbConnection())
+        {
+            await connection.OpenAsync();
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = query;
+                command.CommandType = CommandType.Text;
+
+                try
+                {
+                    await command.ExecuteNonQueryAsync();
+                    // Si no se lanza una excepción, se considera que se eliminó correctamente
+                    return true;
+                }
+                catch (OracleException ex) // Captura la excepción de Oracle
+                {
+                    // Verifica si el error es que el tablespace no existe
+                    if (ex.Number == 959) // ORA-00959
+                    {
+                        throw new Exception($"Error al eliminar el tablespace: El tablespace '{nombre}' no existe.");
+                    }
+
+                    // Si es otro error, relanza la excepción original
+                    throw new Exception("Error al eliminar el tablespace: " + ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error al eliminar el tablespace: " + ex.Message);
+                }
+            }
+        }
+    }
+
+
+
 }
 

@@ -56,5 +56,37 @@ namespace Logica.Models
 
 
 
+        public async Task<ResEliminarTablespace> EliminarTablespace(string nombre)
+        {
+            ResEliminarTablespace res = new ResEliminarTablespace();
+
+            try
+            {
+                // Llamar al método que elimina el tablespace
+                var resultadoEliminacion = await _adminContext.EliminarTablespaceAsync(nombre);
+
+                // Verificar el resultado de la eliminación
+                if (!resultadoEliminacion)
+                {
+                    res.resultado = false;
+                    res.errores.Add("No se pudo eliminar el tablespace.");
+                    return res;
+                }
+
+                res.detalle = $"Tablespace '{nombre}' eliminado correctamente."; // Detalle del resultado
+                res.resultado = true; // Todo salió bien
+            }
+            catch (Exception ex)
+            {
+                res.resultado = false;
+                res.errores.Add($"{ex.Message}");
+            }
+
+            return res;
+        }
+
+
+
+
     }
 }
