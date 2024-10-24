@@ -56,6 +56,41 @@ namespace Logica.Models
 
 
 
+        public async Task<ResListarTablespacesConDetalles> ListarTablespacesConDetalles()
+        {
+            ResListarTablespacesConDetalles res = new ResListarTablespacesConDetalles();
+
+            try
+            {
+                // Llamar al método que obtiene la lista de tablespaces con detalles
+                var tablespacesConDetalles = await _adminContext.ListarTablespacesConDetallesAsync();
+
+                // Verificar si se obtuvieron resultados
+                if (tablespacesConDetalles == null || tablespacesConDetalles.Count == 0)
+                {
+                    res.resultado = false;
+                    res.errores.Add("No se obtuvieron detalles de los tablespaces.");
+                    return res;
+                }
+
+                // Asignar los detalles de los tablespaces a la respuesta
+                res.detalle = tablespacesConDetalles;
+
+                res.resultado = true; // Todo salió bien
+            }
+            catch (Exception ex)
+            {
+                res.resultado = false;
+                res.errores.Add($"Error al procesar la solicitud: {ex.Message}");
+            }
+
+            return res;
+        }
+
+
+
+
+
         public async Task<ResEliminarTablespace> EliminarTablespace(string nombre)
         {
             ResEliminarTablespace res = new ResEliminarTablespace();

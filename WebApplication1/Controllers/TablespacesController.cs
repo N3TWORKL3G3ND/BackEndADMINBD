@@ -63,5 +63,25 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpGet]
+        [Route("API/Tablespaces/ListarTablespacesConDetalles")]
+        public async Task<IActionResult> ListarTablespacesConDetalles()
+        {
+
+            ResListarTablespacesConDetalles res = await _controlTablespaces.ListarTablespacesConDetalles();
+
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(string.Join(", ", res.errores));
+            }
+        }
+
+
+
+
     }
 }
