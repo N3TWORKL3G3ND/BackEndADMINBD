@@ -153,5 +153,67 @@ namespace Logica.Models
             return res;
         }
 
+
+
+        public async Task<ResBase> CrearTablespace(ReqRedimensionarTablespace req)
+        {
+            var res = new ResBase();
+
+            try
+            {
+                // Llamar al método que redimensiona el tablespace
+                var resultadoRedimensionar = await _adminContext.CrearTablespaceAsync(req.nombre, req.tamanno);
+
+                // Asignar los detalles a la respuesta
+                res.detalle = resultadoRedimensionar; // Mensaje devuelto por RedimensionarTablespaceAsync
+
+                // Verificar el resultado y asignar el estado correspondiente
+                if (resultadoRedimensionar.Contains("Error"))
+                {
+                    res.resultado = false;
+                    res.errores.Add(res.detalle);
+                }
+                else
+                {
+                    res.resultado = true; // La operación fue exitosa
+                }
+            }
+            catch (Exception ex)
+            {
+                res.resultado = false;
+                res.errores.Add($"Error al procesar la solicitud: {ex.Message}");
+            }
+
+            return res;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }

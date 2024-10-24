@@ -104,5 +104,50 @@ namespace BackEndADMINBD.Controllers
                 return BadRequest(res.detalle);
             }
         }
+
+
+
+        [HttpPost]
+        [Route("API/Tablespaces/CrearTablespace")]
+        public async Task<IActionResult> CrearTablespace([FromBody] ReqRedimensionarTablespace req)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ningun campo puede estar vacío.");  // Devuelve errores si el JSON no contiene los campos correctos
+            }
+
+
+            ResBase res = await _controlTablespaces.CrearTablespace(req);
+
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }
