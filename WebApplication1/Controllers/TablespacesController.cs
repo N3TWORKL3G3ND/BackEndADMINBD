@@ -82,6 +82,27 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpPost]
+        [Route("API/Tablespaces/RedimencionarTablespace")]
+        public async Task<IActionResult> RedimencionarTablespace([FromBody] ReqRedimensionarTablespace req)
+        {
 
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ningun campo puede estar vacío.");  // Devuelve errores si el JSON no contiene los campos correctos
+            }
+
+
+            ResRedimensionarTablespace res = await _controlTablespaces.RedimensionarTablespace(req);
+
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
     }
 }

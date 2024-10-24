@@ -124,10 +124,6 @@ public class AdminContext : DbContext
 
 
 
-
-
-
-
     public async Task<bool> EliminarTablespaceAsync(string nombre)
     {
         var query = $"DROP TABLESPACE {nombre} INCLUDING CONTENTS AND DATAFILES";
@@ -165,6 +161,89 @@ public class AdminContext : DbContext
             }
         }
     }
+
+
+
+
+
+    
+    public async Task<string> RedimensionarTablespaceAsync(string nombre, int tamanno)
+    {
+        var queryObtenerArchivo = @"
+        SELECT file_name 
+        FROM dba_data_files 
+        WHERE tablespace_name = :nombre";
+
+        var connection = Database.GetDbConnection();
+        await connection.OpenAsync();
+
+        try
+        {
+            // Paso 1: Obtener el nombre del archivo de datos asociado con el tablespace
+            string nombreArchivo = null;
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = queryObtenerArchivo;
+                command.CommandType = CommandType.Text;
+
+                var parameter = command.CreateParameter();
+                parameter.ParameterName = ":nombre";
+                parameter.Value = nombre.ToUpper(); // Oracle usa nombres de tablas y tablespaces en mayúsculas
+                command.Parameters.Add(parameter);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        nombreArchivo = reader.GetString(0); // Nombre del archivo de datos
+                    }
+                    else
+                    {
+                        return $"Error: No se encontró un archivo de datos para el tablespace '{nombre}'.";
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(nombreArchivo))
+            {
+                return $"Error: No se encontró archivo de datos para el tablespace '{nombre}'.";
+            }
+
+            // Paso 2: Redimensionar el archivo de datos
+            var queryRedimensionar = $@"
+            ALTER DATABASE DATAFILE '{nombreArchivo}' RESIZE {tamanno}M";
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = queryRedimensionar;
+                command.CommandType = CommandType.Text;
+
+                var resultado = await command.ExecuteNonQueryAsync();
+
+                // Si la consulta se ejecuta correctamente, el tamaño del archivo ha sido ajustado
+                return $"El tablespace '{nombre}' ha sido redimensionado a {tamanno} MB correctamente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            // Manejo de excepciones
+            return $"Error al redimensionar el tablespace '{nombre}': {ex.Message}";
+        }
+        finally
+        {
+            await connection.CloseAsync();
+        }
+    }
+    
+
+
+
+
+
+
+
+
 
 
 
