@@ -25,6 +25,9 @@ builder.Services.AddScoped<ControlTablespaces>();
 // Registra el servicio ControlSeguridadUsuarios
 builder.Services.AddScoped<ControlSeguridadUsuarios>();
 
+// Registra el servicio ControlRespaldos
+builder.Services.AddScoped<ControlRespaldos>();
+
 // Agregar servicios al contenedor.
 builder.Services.AddControllers();
 

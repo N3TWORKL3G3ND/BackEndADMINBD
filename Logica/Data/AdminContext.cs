@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Oracle.ManagedDataAccess.Client;  // Necesario para ODP.NET
 using System;
 using System.Data;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -689,10 +690,64 @@ WHERE
 
 
 
+    //======================================
+    //=============RESPALDOS================
+    //======================================
 
 
 
+    public virtual async Task<string> RespaldarEsquemaAsync(string nombreEsquema)
+    {
+        // Generar un nombre preferente para el respaldo con fecha y hora
+        string nombreRespaldo = $"{nombreEsquema}_Respaldo_{DateTime.Now:yyyyMMdd}";
 
+        // Define la ruta donde se almacenará el respaldo
+        string rutaRespaldo = $@"C:\ADMINBD\RESPALDOS\{nombreRespaldo}";
+
+        // Crea el comando para ejecutar el respaldo
+        string comando = $@"expdp 'SYS/root123@localhost:1521/XE AS SYSDBA' schemas={nombreEsquema} directory=DATA_PUMP_DIR dumpfile={nombreRespaldo}.dmp logfile={nombreRespaldo}.log";
+
+
+
+        try
+        {
+            // Crea un proceso para ejecutar el comando expdp
+            var proceso = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $@"/C {comando}",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
+
+            // Inicia el proceso
+            proceso.Start();
+
+            // Lee la salida del proceso
+            string salida = await proceso.StandardOutput.ReadToEndAsync();
+            string errores = await proceso.StandardError.ReadToEndAsync();
+
+            // Espera a que el proceso finalice
+            await proceso.WaitForExitAsync();
+
+            // Verifica si hubo errores
+            if (proceso.ExitCode != 0)
+            {
+                return $"Error: {errores}";
+            }
+
+            return $"Respaldo del esquema '{nombreEsquema}' creado exitosamente en '{rutaRespaldo}'.";
+        }
+        catch (Exception ex)
+        {
+            return $"Error: {ex.Message}";
+        }
+    }
 
 
 
