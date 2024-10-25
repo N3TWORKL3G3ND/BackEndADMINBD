@@ -699,7 +699,7 @@ WHERE
     public virtual async Task<string> RespaldarEsquemaAsync(string nombreEsquema)
     {
         // Generar un nombre preferente para el respaldo con fecha y hora
-        string nombreRespaldo = $"{nombreEsquema}_Respaldo_{DateTime.Now:yyyyMMdd}";
+        string nombreRespaldo = $"{nombreEsquema}_Respaldo_{DateTime.Now:yyyyMMdd_HHmmss}";
 
         // Define la ruta donde se almacenará el respaldo
         string rutaRespaldo = $@"C:\ADMINBD\RESPALDOS\{nombreRespaldo}";
