@@ -43,7 +43,24 @@ namespace Logica.Models
 
 
 
+        public async Task<ResListarBase<RoleDto>> ListarRoles()
+        {
+            ResListarBase<RoleDto> res = new ResListarBase<RoleDto>();
 
+            try
+            {
+                res.datos = await _adminContext.ListarRolesAsync();
+                res.resultado = true;
+                res.detalle = "Roles listados correctamente.";
+            }
+            catch (Exception ex)
+            {
+                res.resultado = false;
+                res.errores.Add($"Error al listar roles: {ex.Message}");
+            }
+
+            return res;
+        }
 
 
 

@@ -406,6 +406,78 @@ WHERE
 
 
 
+    public async Task<List<RoleDto>> ListarRolesAsync()
+    {
+        var roles = new List<RoleDto>();
+
+        using (var connection = new OracleConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT 
+                    r.role AS nombre_rol,
+                    (SELECT COUNT(*) FROM dba_role_privs ur WHERE ur.granted_role = r.role) AS numero_usuarios
+                FROM 
+                    dba_roles r
+                WHERE 
+                    r.role NOT IN (
+                        'SYS', 'SYSTEM', 'DBA', 'CONNECT', 'RESOURCE', 'EXP_FULL_DATABASE', 
+                        'IMP_FULL_DATABASE', 'SELECT_CATALOG_ROLE', 'EXECUTE_CATALOG_ROLE', 
+                        'ANALYZE_CATALOG_ROLE', 'APEX_040000', 'APEX_PUBLIC_USER', 
+                        'MDSYS', 'CTXSYS', 'ORDDATA', 'ORDDATA_AUDIT', 'OLAPSYS', 
+                        'OLAP_DBA', 'SI_INFORMTN_SCHEMA', 'FLOWS_FILES', 
+                        'WMSYS', 'XDB', 'DBMS_SCHEDULER', 'DBMS_AQ', 
+                        'DBMS_JOB', 'DBMS_LOB', 'DBMS_OUTPUT', 'DBMS_SCHEDULER_ADMIN',
+                        -- Roles a excluir
+                        'ACCHK_READ', 'ADM_PARALLEL_EXECUTE_TASK', 'APPLICATION_TRACE_VIEWER',
+                        'AQ_ADMINISTRATOR_ROLE', 'AQ_USER_ROLE', 'AUDIT_ADMIN', 
+                        'AUDIT_VIEWER', 'AUTHENTICATEDUSER', 'AVTUNE_PKG_ROLE', 
+                        'BDSQL_ADMIN', 'BDSQL_USER', 'CAPTURE_ADMIN', 'CDB_DBA', 
+                        'CTXAPP', 'DATAPATCH_ROLE', 'DATAPUMP_EXP_FULL_DATABASE', 
+                        'DATAPUMP_IMP_FULL_DATABASE', 'DBFS_ROLE', 'DBJAVASCRIPT', 
+                        'DBMS_MDX_INTERNAL', 'DV_ACCTMGR', 'DV_ADMIN', 'DV_AUDIT_CLEANUP', 
+                        'DV_DATAPUMP_NETWORK_LINK', 'DV_GOLDENGATE_ADMIN', 
+                        'DV_GOLDENGATE_REDO_ACCESS', 'DV_MONITOR', 'DV_OWNER', 
+                        'DV_PATCH_ADMIN', 'DV_POLICY_OWNER', 'DV_SECANALYST', 
+                        'DV_STREAMS_ADMIN', 'DV_XSTREAM_ADMIN', 'EJBCLIENT', 
+                        'EM_EXPRESS_ALL', 'EM_EXPRESS_BASIC', 'GATHER_SYSTEM_STATISTICS', 
+                        'GDS_CATALOG_SELECT', 'GGSYS_ROLE', 'GLOBAL_AQ_USER_ROLE', 
+                        'GSMADMIN_ROLE', 'GSM_POOLADMIN_ROLE', 'GSMROOTUSER_ROLE', 
+                        'GSMUSER_ROLE', 'HS_ADMIN_EXECUTE_ROLE', 'HS_ADMIN_ROLE', 
+                        'HS_ADMIN_SELECT_ROLE', 'JAVA_ADMIN', 'JAVADEBUGPRIV', 
+                        'JAVAIDPRIV', 'JAVASYSPRIV', 'JAVAUSERPRIV', 'JMXSERVER', 
+                        'LBAC_DBA', 'LOGSTDBY_ADMINISTRATOR', 'MAINTPLAN_APP', 
+                        'OEM_ADVISOR', 'OEM_MONITOR', 'OLAP_USER', 'OLAP_XS_ADMIN', 
+                        'OPTIMIZER_PROCESSING_RATE', 'ORDADMIN', 'PDB_DBA', 'PPLB_ROLE', 
+                        'PROVISIONER', 'RDFCTX_ADMIN', 'RECOVERY_CATALOG_OWNER', 
+                        'RECOVERY_CATALOG_OWNER_VPD', 'RECOVERY_CATALOG_USER', 
+                        'SCHEDULER_ADMIN', 'SODA_APP', 'WM_ADMIN_ROLE', 
+                        'XDBADMIN', 'XDB_SET_INVOKER', 'XDB_WEBSERVICES', 
+                        'XDB_WEBSERVICES_OVER_HTTP', 'XDB_WEBSERVICES_WITH_PUBLIC', 
+                        'XS_CACHE_ADMIN', 'XS_CONNECT', 'XS_NAMESPACE_ADMIN', 
+                        'XS_SESSION_ADMIN', 'SYSUMF_ROLE'
+                    )
+                ORDER BY 
+                    r.role";
+
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var role = new RoleDto
+                    {
+                        NombreRol = reader["nombre_rol"]?.ToString()!, // Puede ser null
+                        NumeroUsuarios = reader["numero_usuarios"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("numero_usuarios")) : 0 // Obtener como entero
+                    };
+                    roles.Add(role);
+                }
+            }
+        }
+
+        return roles;
+    }
 
 
 

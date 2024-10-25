@@ -35,6 +35,24 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpGet]
+        [Route("API/SeguridadUsuarios/ListarRoles")]
+        public async Task<IActionResult> ListarRoles()
+        {
+
+            ResListarBase<RoleDto> res = await _controlSeguridadUsuarios.ListarRoles();
+
+            if (res.resultado)
+            {
+                return Ok(res.datos);
+            }
+            else
+            {
+                return BadRequest(string.Join(", ", res.errores));
+            }
+        }
+
+
 
 
 
