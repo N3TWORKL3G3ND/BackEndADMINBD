@@ -105,7 +105,28 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpPost]
+        [Route("API/SeguridadUsuarios/CrearRol")]
+        public async Task<IActionResult> CrearRol([FromBody] ReqBase req)
+        {
 
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ningun campo puede estar vacío.");  // Devuelve errores si el JSON no contiene los campos correctos
+            }
+
+
+            ResBase res = await _controlSeguridadUsuarios.CrearRol(req);
+
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
 
 
 

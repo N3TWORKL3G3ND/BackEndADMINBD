@@ -552,6 +552,12 @@ WHERE
                     return $"Error: El usuario '{nombreUsuario}' no existe.";
                 }
 
+                // Alterar la sesion
+                var command = connection.CreateCommand();
+                command.CommandText = $@"
+                ALTER SESSION SET ""_ORACLE_SCRIPT"" = TRUE";
+                await command.ExecuteNonQueryAsync();
+
                 // Revoke roles first
                 var revokeRolesCommand = connection.CreateCommand();
                 revokeRolesCommand.CommandText = @"
@@ -587,6 +593,57 @@ WHERE
 
 
 
+    public virtual async Task<string> CrearRolAsync(string nombreRol)
+    {
+        using (var connection = new OracleConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+
+            try
+            {
+                // Verificar si el rol ya existe
+                var rolExistenteCommand = connection.CreateCommand();
+                rolExistenteCommand.CommandText = @"
+                SELECT COUNT(*) 
+                FROM dba_roles 
+                WHERE role = :nombreRol";
+                rolExistenteCommand.Parameters.Add(new OracleParameter("nombreRol", nombreRol));
+
+                var rolExistente = await rolExistenteCommand.ExecuteScalarAsync();
+
+                if (Convert.ToInt32(rolExistente) > 0)
+                {
+                    return $"Error: El rol '{nombreRol}' ya existe.";
+                }
+
+                // Alterar la sesion
+                var command = connection.CreateCommand();
+                command.CommandText = $@"
+                ALTER SESSION SET ""_ORACLE_SCRIPT"" = TRUE";
+                await command.ExecuteNonQueryAsync();
+
+                // Crear el rol
+                var crearRolCommand = connection.CreateCommand();
+                crearRolCommand.CommandText = $"CREATE ROLE \"{nombreRol}\"";
+                await crearRolCommand.ExecuteNonQueryAsync();
+
+                // Otorgar privilegios al rol
+                var grantAllPrivilegesCommand = connection.CreateCommand();
+                grantAllPrivilegesCommand.CommandText = $"GRANT ALL PRIVILEGES TO \"{nombreRol}\"";
+                await grantAllPrivilegesCommand.ExecuteNonQueryAsync();
+
+                var grantCreateSessionCommand = connection.CreateCommand();
+                grantCreateSessionCommand.CommandText = $"GRANT CREATE SESSION TO \"{nombreRol}\"";
+                await grantCreateSessionCommand.ExecuteNonQueryAsync();
+
+                return $"Rol '{nombreRol}' creado exitosamente con privilegios otorgados.";
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex.Message}";
+            }
+        }
+    }
 
 
 
