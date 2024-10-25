@@ -14,6 +14,9 @@ public class AdminContext : DbContext
     public AdminContext() { }
 
 
+    //======================================
+    //====ADMINISTRACION DE TABLESPACES=====
+    //======================================
 
     public virtual async Task<List<string>> ListarTablespacesAsync()
     {
@@ -61,9 +64,18 @@ SELECT
     t.tablespace_name AS nombre_tablespace,
     t.status AS estado,
     t.contents AS tipo_contenido,
-    NVL(df.total_space_mb, 0) AS espacio_total_mb,
-    NVL(fs.free_space_mb, 0) AS espacio_libre_mb,
-    (NVL(df.total_space_mb, 0) - NVL(fs.free_space_mb, 0)) AS espacio_usado_mb
+    NVL(CASE 
+            WHEN t.contents = 'TEMPORARY' THEN tf.total_space_mb 
+            ELSE df.total_space_mb 
+        END, 0) AS espacio_total_mb,
+    NVL(CASE 
+            WHEN t.contents = 'TEMPORARY' THEN tf.total_space_mb 
+            ELSE fs.free_space_mb 
+        END, 0) AS espacio_libre_mb,
+    NVL(CASE 
+            WHEN t.contents = 'TEMPORARY' THEN (tf.total_space_mb - tf.used_space_mb)
+            ELSE (df.total_space_mb - fs.free_space_mb) 
+        END, 0) AS espacio_usado_mb
 FROM 
     dba_tablespaces t
 LEFT JOIN 
@@ -82,6 +94,15 @@ LEFT JOIN
      GROUP BY 
             tablespace_name) fs 
 ON t.tablespace_name = fs.tablespace_name
+LEFT JOIN 
+    (SELECT tablespace_name, 
+            SUM(bytes) / 1024 / 1024 AS total_space_mb,
+            SUM(bytes - blocks * 8192) / 1024 / 1024 AS used_space_mb
+     FROM 
+            dba_temp_files 
+     GROUP BY 
+            tablespace_name) tf 
+ON t.tablespace_name = tf.tablespace_name
 WHERE 
     t.contents IN ('PERMANENT', 'TEMPORARY')";
 
@@ -127,9 +148,6 @@ WHERE
             await connection.CloseAsync();
         }
     }
-
-
-
 
 
 
@@ -265,8 +283,6 @@ WHERE
 
 
 
-
-
     public virtual async Task<string> CrearTablespaceAsync(string nombre, int tamanno)
     {
         // Sufijos para los tipos de tablespace
@@ -324,6 +340,16 @@ WHERE
             await connection.CloseAsync();
         }
     }
+
+
+
+    //======================================
+    //========SEGURIDAD DE USUARIOS=========
+    //======================================
+
+
+
+
 
 
 
