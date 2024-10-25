@@ -1,5 +1,6 @@
 ﻿using Logica.Models;
 using Logica.Objets;
+using Logica.Requests;
 using Logica.Responses;
 using Microsoft.AspNetCore.Mvc;
 
@@ -54,7 +55,28 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpPost]
+        [Route("API/SeguridadUsuarios/CrearUsuario")]
+        public async Task<IActionResult> CrearUsuario([FromBody] ReqCrearUsuario req)
+        {
 
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ningun campo puede estar vacío.");  // Devuelve errores si el JSON no contiene los campos correctos
+            }
+
+
+            ResBase res = await _controlSeguridadUsuarios.CrearUsuario(req);
+
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
 
 
 

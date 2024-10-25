@@ -481,6 +481,94 @@ WHERE
 
 
 
+    public virtual async Task<string> CrearUsuarioAsync(string nombre, string contrasenna, string nombreTablespace, string nombreTablespaceTemporal, string nombreRol)
+    {
+        // Conexión a la base de datos
+        using (var connection = new OracleConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+
+            try
+            {
+                // Verificar si el tablespace existe
+                if (!await VerificarTablespaceAsync(connection, nombreTablespace))
+                {
+                    return $"Error: El tablespace '{nombreTablespace}' no existe.";
+                }
+
+                if (!await VerificarTablespaceAsync(connection, nombreTablespaceTemporal))
+                {
+                    return $"Error: El tablespace temporal '{nombreTablespaceTemporal}' no existe.";
+                }
+
+                // Verificar si el rol existe
+                if (!await VerificarRolAsync(connection, nombreRol))
+                {
+                    return $"Error: El rol '{nombreRol}' no existe.";
+                }
+
+                // Alterar la sesion
+                var command = connection.CreateCommand();
+                command.CommandText = $@"
+                ALTER SESSION SET ""_ORACLE_SCRIPT"" = TRUE";
+
+                await command.ExecuteNonQueryAsync();
+
+                // Crear el usuario
+                command = connection.CreateCommand();
+                command.CommandText = $@"
+                CREATE USER {nombre} IDENTIFIED BY {contrasenna}
+                DEFAULT TABLESPACE {nombreTablespace}
+                TEMPORARY TABLESPACE {nombreTablespaceTemporal}";
+
+                await command.ExecuteNonQueryAsync();
+
+                // Asignar el rol al usuario
+                command.CommandText = $"GRANT {nombreRol} TO {nombre}";
+                await command.ExecuteNonQueryAsync();
+
+                return $"Usuario '{nombre}' creado exitosamente.";
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex.Message}";
+            }
+        }
+    }
+
+
+
+    //======================================
+    //==========METODOS AUXILIARES==========
+    //======================================
+
+
+
+    // Método para verificar si un tablespace existe
+    private async Task<bool> VerificarTablespaceAsync(OracleConnection connection, string nombreTablespace)
+    {
+        var command = connection.CreateCommand();
+        command.CommandText = $"SELECT COUNT(*) FROM dba_tablespaces WHERE tablespace_name = :nombreTablespace";
+        command.Parameters.Add(new OracleParameter("nombreTablespace", nombreTablespace.ToUpper()));
+
+        var result = await command.ExecuteScalarAsync();
+        return Convert.ToInt32(result) > 0;
+    }
+
+
+
+    // Método para verificar si un rol existe
+    private async Task<bool> VerificarRolAsync(OracleConnection connection, string nombreRol)
+    {
+        var command = connection.CreateCommand();
+        command.CommandText = $"SELECT COUNT(*) FROM dba_roles WHERE role = :nombreRol";
+        command.Parameters.Add(new OracleParameter("nombreRol", nombreRol.ToUpper()));
+
+        var result = await command.ExecuteScalarAsync();
+        return Convert.ToInt32(result) > 0;
+    }
+
+
 
 
 

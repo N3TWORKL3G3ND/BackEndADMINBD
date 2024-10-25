@@ -1,4 +1,5 @@
 ﻿using Logica.Objets;
+using Logica.Requests;
 using Logica.Responses;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -57,6 +58,40 @@ namespace Logica.Models
             {
                 res.resultado = false;
                 res.errores.Add($"Error al listar roles: {ex.Message}");
+            }
+
+            return res;
+        }
+
+
+
+        public async Task<ResBase> CrearUsuario(ReqCrearUsuario req)
+        {
+            var res = new ResBase();
+
+            try
+            {
+                // Llamar al método que redimensiona el tablespace
+                var resultado = await _adminContext.CrearUsuarioAsync(req.nombre, req.contrasenna, req.nombreTablespace, req.nombreTablespaceTemporal, req.nombreRol);
+
+                // Asignar los detalles a la respuesta
+                res.detalle = resultado; // Mensaje devuelto por RedimensionarTablespaceAsync
+
+                // Verificar el resultado y asignar el estado correspondiente
+                if (resultado.Contains("Error"))
+                {
+                    res.resultado = false;
+                    res.errores.Add(res.detalle);
+                }
+                else
+                {
+                    res.resultado = true; // La operación fue exitosa
+                }
+            }
+            catch (Exception ex)
+            {
+                res.resultado = false;
+                res.errores.Add($"Error al procesar la solicitud: {ex.Message}");
             }
 
             return res;
