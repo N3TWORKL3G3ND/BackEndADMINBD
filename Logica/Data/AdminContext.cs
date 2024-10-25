@@ -1,6 +1,7 @@
 ﻿using Logica.Objets;
 using Logica.Responses;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Oracle.ManagedDataAccess.Client;  // Necesario para ODP.NET
 using System;
 using System.Data;
@@ -9,9 +10,13 @@ using System.Threading.Tasks;
 
 public class AdminContext : DbContext
 {
-    public AdminContext(DbContextOptions<AdminContext> options) : base(options) { }
+    private readonly string _connectionString;
 
-    public AdminContext() { }
+    public AdminContext(DbContextOptions<AdminContext> options, IConfiguration configuration) : base(options) {
+        _connectionString = configuration.GetConnectionString("OracleDbConnection")!;
+    }
+
+    
 
 
     //======================================
@@ -148,8 +153,6 @@ WHERE
             await connection.CloseAsync();
         }
     }
-
-
 
 
 
@@ -349,6 +352,57 @@ WHERE
 
 
 
+    public async Task<List<UsuarioDto>> ListarUsuariosAsync()
+    {
+        var usuarios = new List<UsuarioDto>();
+
+        using (var connection = new OracleConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT 
+                    u.username AS nombre_usuario,
+                    u.account_status AS estado_usuario,
+                    u.default_tablespace AS tablespace_defecto,
+                    u.profile AS perfil,
+                    r.granted_role AS nombre_rol
+                FROM 
+                    dba_users u
+                LEFT JOIN 
+                    dba_role_privs r ON u.username = r.grantee
+                WHERE 
+                    u.username NOT IN ('SYS', 'SYSTEM', 'DBSNMP', 'OUTLN', 'XS$NULL', 'ORDDATA', 'ORDPLUGINS',
+                                       'ORDDATA', 'ORACLE_OCM', 'CTXSYS', 'MDSYS', 'WMSYS', 'EXFSYS', 'XDB', 
+                                       'ANONYMOUS', 'OLAPSYS', 'SI_INFORMTN_SCHEMA', 'SYSMAN', 'FLOWS_FILES',
+                                       'APEX_040000', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR', 
+                                       'APPQOSSYS', 'DVSYS', 'GSMADMIN_INTERNAL', 'GGSYS', 'AUDSYS', 'OJVMSYS', 'SYSBACKUP',
+                                       'SYSDG', 'SYSKM', 'SYSRAC', 'SYS$UMF', 'DBSFWUSER', 'DGPDB_INT', 'DIP',
+                                       'DVF', 'GSMCATUSER', 'GSMROOTUSER', 'GSMUSER', 'LBACSYS', 'MDDATA', 'ORDSYS',
+                                       'REMOTE_SCHEDULER_AGENT')
+                ORDER BY 
+                    u.username";
+
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var usuario = new UsuarioDto
+                    {
+                        NombreUsuario = reader["nombre_usuario"].ToString()!,
+                        EstadoUsuario = reader["estado_usuario"].ToString()!,
+                        TablespaceDefecto = reader["tablespace_defecto"].ToString()!,
+                        Perfil = reader["perfil"].ToString()!,
+                        NombreRol = reader["nombre_rol"]?.ToString()! // Puede ser null
+                    };
+                    usuarios.Add(usuario);
+                }
+            }
+        }
+
+        return usuarios;
+    }
 
 
 

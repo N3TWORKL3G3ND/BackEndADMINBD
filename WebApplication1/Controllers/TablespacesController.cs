@@ -19,16 +19,17 @@ namespace BackEndADMINBD.Controllers
         }
 
 
+
         [HttpGet]
         [Route("API/Tablespaces/ListarTablespaces")]
         public async Task<IActionResult> ListarTablespaces()
         {
 
-            ResListarTablespaces res = await _controlTablespaces.ListarTablespaces();
+            ResListarBase<string> res = await _controlTablespaces.ListarTablespaces();
 
             if (res.resultado)
             {
-                return Ok(res.detalle);
+                return Ok(res.datos);
             }
             else
             {

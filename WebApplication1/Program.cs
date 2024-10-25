@@ -22,6 +22,9 @@ builder.Services.AddDbContext<AdminContext>(options =>
 // Registra el servicio ControlTablespaces
 builder.Services.AddScoped<ControlTablespaces>();
 
+// Registra el servicio ControlSeguridadUsuarios
+builder.Services.AddScoped<ControlSeguridadUsuarios>();
+
 // Agregar servicios al contenedor.
 builder.Services.AddControllers();
 

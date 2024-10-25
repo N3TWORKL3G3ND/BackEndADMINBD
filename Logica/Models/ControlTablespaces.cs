@@ -24,9 +24,9 @@ namespace Logica.Models
 
 
 
-        public async Task<ResListarTablespaces> ListarTablespaces()
+        public async Task<ResListarBase<string>> ListarTablespaces()
         {
-            ResListarTablespaces res = new ResListarTablespaces();
+            ResListarBase<string> res = new ResListarBase<string>();
             
 
             try
@@ -42,7 +42,7 @@ namespace Logica.Models
                 }
 
                 // Asignar los tablespaces al detalle
-                res.detalle = tablespaces; // Asignar la lista directamente a la propiedad detalle
+                res.datos = tablespaces; // Asignar la lista directamente a la propiedad detalle
 
                 res.resultado = true; // Todo salió bien
             }
