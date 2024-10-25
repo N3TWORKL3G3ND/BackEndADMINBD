@@ -647,6 +647,55 @@ WHERE
 
 
 
+    public virtual async Task<string> EliminarRolAsync(string nombreRol)
+    {
+        using (var connection = new OracleConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+
+            try
+            {
+                // Verificar si el rol existe
+                var checkCommand = connection.CreateCommand();
+                checkCommand.CommandText = $"SELECT COUNT(*) FROM ROLE_SYS_PRIVS WHERE ROLE = :rol";
+                checkCommand.Parameters.Add(new OracleParameter("rol", nombreRol));
+
+                var count = Convert.ToInt32(await checkCommand.ExecuteScalarAsync());
+
+                if (count == 0)
+                {
+                    return $"Error: El rol '{nombreRol}' no existe.";
+                }
+
+                // Alterar la sesion
+                var command = connection.CreateCommand();
+                command.CommandText = $@"
+                ALTER SESSION SET ""_ORACLE_SCRIPT"" = TRUE";
+                await command.ExecuteNonQueryAsync();
+
+                // Crear el comando para eliminar el rol
+                command = connection.CreateCommand();
+                command.CommandText = $"DROP ROLE \"{nombreRol}\"";
+                await command.ExecuteNonQueryAsync();
+
+                return $"Rol '{nombreRol}' eliminado exitosamente.";
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex.Message}";
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
 
 
 

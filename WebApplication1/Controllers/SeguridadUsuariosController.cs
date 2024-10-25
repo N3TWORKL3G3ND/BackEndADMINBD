@@ -130,7 +130,28 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpPost]
+        [Route("API/SeguridadUsuarios/EliminarRol")]
+        public async Task<IActionResult> EliminarRol([FromBody] ReqBase req)
+        {
 
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ningun campo puede estar vacío.");  // Devuelve errores si el JSON no contiene los campos correctos
+            }
+
+
+            ResBase res = await _controlSeguridadUsuarios.EliminarRol(req);
+
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
 
 
 
