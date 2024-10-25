@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Logica.Objets
 {
-    public class TablespaceDetalle
+    public class TablespaceDto
     {
         public string nombre { get; set; } = string.Empty; // Nombre del tablespace
         public string estado { get; set; } = string.Empty; // Estado del tablespace (ej. ONLINE, OFFLINE)

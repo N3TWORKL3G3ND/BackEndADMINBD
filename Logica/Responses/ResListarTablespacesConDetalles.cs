@@ -10,7 +10,7 @@ namespace Logica.Responses
     public class ResListarTablespacesConDetalles
     {
         public bool resultado { get; set; } // Indica si la operación fue exitosa
-        public List<TablespaceDetalle> detalle { get; set; } = new List<TablespaceDetalle>(); // Lista de detalles de tablespaces
+        public List<TablespaceDto> detalle { get; set; } = new List<TablespaceDto>(); // Lista de detalles de tablespaces
         public List<string> errores { get; set; } = new List<string>(); // Lista de errores en caso de fallo
     }
 }

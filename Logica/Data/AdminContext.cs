@@ -62,7 +62,7 @@ public class AdminContext : DbContext
 
 
 
-    public virtual async Task<List<TablespaceDetalle>> ListarTablespacesConDetallesAsync()
+    public virtual async Task<List<TablespaceDto>> ListarTablespacesConDetallesAsync()
     {
         var query = @"
 SELECT 
@@ -123,11 +123,11 @@ WHERE
 
                 using (var reader = await command.ExecuteReaderAsync())
                 {
-                    var tablespacesConDetalles = new List<TablespaceDetalle>();
+                    var tablespacesConDetalles = new List<TablespaceDto>();
 
                     while (await reader.ReadAsync())
                     {
-                        var detalle = new TablespaceDetalle
+                        var detalle = new TablespaceDto
                         {
                             nombre = reader.GetString(0),               // Nombre del tablespace
                             estado = reader.GetString(1),               // Estado (ej. ONLINE, OFFLINE)
@@ -538,6 +538,68 @@ WHERE
 
 
 
+    public virtual async Task<string> EliminarUsuarioAsync(string nombreUsuario)
+    {
+        using (var connection = new OracleConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+
+            try
+            {
+                // Verificar si el usuario existe
+                if (!await VerificarUsuarioAsync(connection, nombreUsuario))
+                {
+                    return $"Error: El usuario '{nombreUsuario}' no existe.";
+                }
+
+                // Revoke roles first
+                var revokeRolesCommand = connection.CreateCommand();
+                revokeRolesCommand.CommandText = @"
+                SELECT granted_role 
+                FROM dba_role_privs 
+                WHERE grantee = :nombreUsuario";
+                revokeRolesCommand.Parameters.Add(new OracleParameter("nombreUsuario", nombreUsuario));
+
+                using (var reader = await revokeRolesCommand.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var role = reader.GetString(0);
+                        var revokeRoleCommand = connection.CreateCommand();
+                        revokeRoleCommand.CommandText = $"REVOKE \"{role}\" FROM \"{nombreUsuario}\"";
+                        await revokeRoleCommand.ExecuteNonQueryAsync();
+                    }
+                }
+
+                // Now attempt to drop the user
+                var dropUserCommand = connection.CreateCommand();
+                dropUserCommand.CommandText = $"DROP USER \"{nombreUsuario}\" CASCADE";
+                await dropUserCommand.ExecuteNonQueryAsync();
+
+                return $"Usuario '{nombreUsuario}' eliminado exitosamente.";
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex.Message}";
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     //======================================
     //==========METODOS AUXILIARES==========
     //======================================
@@ -570,7 +632,18 @@ WHERE
 
 
 
+    private async Task<bool> VerificarUsuarioAsync(OracleConnection connection, string nombreUsuario)
+    {
+        var command = connection.CreateCommand();
+        command.CommandText = $"SELECT COUNT(*) FROM all_users WHERE username = '{nombreUsuario.ToUpper()}'";
 
+        var result = await command.ExecuteScalarAsync();
+        return (Convert.ToInt32(result) > 0);
+    }
+
+
+
+    
 
 
 }
