@@ -79,7 +79,21 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpPost]
+        [Route("API/Respaldos/RespaldarTabla")]
+        public async Task<IActionResult> RespaldarTabla([FromBody] ReqBase req)
+        {
+            ResBase res = await _controlRespaldos.RespaldarTabla(req);
 
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
 
 
 
