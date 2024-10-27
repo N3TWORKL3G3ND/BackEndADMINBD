@@ -97,6 +97,24 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpPost]
+        [Route("API/Respaldos/RecuperarRespaldoEsquema")]
+        public async Task<IActionResult> RecuperarRespaldoEsquema([FromBody] ReqRecResEsquema req)
+        {
+            ResBase res = await _controlRespaldos.RecuperarRespaldoEsquema(req);
+
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
+
+
+
 
 
 

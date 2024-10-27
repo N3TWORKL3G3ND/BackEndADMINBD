@@ -886,6 +886,59 @@ WHERE
 
 
 
+    public virtual async Task<string> RecuperarRespaldoEsquemaAsync(string nombreEsquema, string nombreRespaldo)
+    {
+        // Define la ruta donde se encuentra el respaldo
+        string rutaRespaldo = $@"C:\ADMINBD\RESPALDOS\{nombreRespaldo}";
+
+        // Comando para ejecutar la recuperación del respaldo
+        string comandoRecuperacion = $@"impdp 'SYS/root123@localhost:1521/XE AS SYSDBA' schemas={nombreEsquema} directory=DATA_PUMP_DIR dumpfile={nombreRespaldo}.dmp logfile=RECUPERACION_{nombreEsquema}.log";
+
+        
+        try
+        {
+            // Verificar y crear el usuario si es necesario
+            await VerificarYCrearEsquemaAsync(nombreEsquema);
+
+            // Crea un proceso para ejecutar el comando impdp
+            var proceso = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $@"/C {comandoRecuperacion}",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
+
+            // Inicia el proceso
+            proceso.Start();
+
+            // Lee la salida del proceso
+            string salida = await proceso.StandardOutput.ReadToEndAsync();
+            string errores = await proceso.StandardError.ReadToEndAsync();
+
+            // Espera a que el proceso finalice
+            await proceso.WaitForExitAsync();
+
+            // Verifica si hubo errores
+            if (proceso.ExitCode != 0)
+            {
+                return $"Error: {errores}";
+            }
+
+            return $"El esquema '{nombreEsquema}' fue recuperado exitosamente desde el respaldo '{nombreRespaldo}.dmp'.";
+        }
+        catch (Exception ex)
+        {
+            return $"Error: {ex.Message}";
+        }
+    }
+
+
 
 
 
@@ -958,7 +1011,92 @@ WHERE
 
 
 
-    
+    private async Task VerificarYCrearEsquemaAsync(string nombreEsquema)
+    {
+        // Comando para verificar si el esquema ya existe
+        string verificarEsquema = $@"SELECT COUNT(*) FROM dba_users WHERE username = '{nombreEsquema.ToUpper()}'";
+        
+
+        // Comandos para crear el esquema si no existe
+        string crearTablespace = $@"CREATE TABLESPACE {nombreEsquema}_DAT DATAFILE 'C:\ADMINBD\{nombreEsquema}_DAT.dbf' SIZE 10M AUTOEXTEND ON NEXT 10M MAXSIZE 1G";
+        string crearTablespaceTemporal = $@"CREATE TEMPORARY TABLESPACE {nombreEsquema}_TEMP TEMPFILE 'C:\ADMINBD\{nombreEsquema}_TEMP.dbf' SIZE 10M AUTOEXTEND ON NEXT 10M MAXSIZE 1G";
+        string crearUsuario = $@"CREATE USER {nombreEsquema} IDENTIFIED BY root123 DEFAULT TABLESPACE {nombreEsquema}_DAT TEMPORARY TABLESPACE {nombreEsquema}_TEMP";
+        string otorgarPermisos1 = $@"GRANT CREATE SESSION TO {nombreEsquema}";
+        string otorgarPermisos2 = $@"GRANT CONNECT TO {nombreEsquema}";
+        string otorgarPermisos3 = $@"GRANT ALL PRIVILEGES TO {nombreEsquema}";
+
+        using (var connection = new OracleConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+
+            // Verificar si el esquema ya existe
+            using (var commandVerificar = new OracleCommand(verificarEsquema, connection))
+            {
+                int esquemaExiste = Convert.ToInt32(await commandVerificar.ExecuteScalarAsync());
+                
+
+                if (esquemaExiste == 0)
+                {
+                    // Alterar la sesion
+                    var command = connection.CreateCommand();
+                    command.CommandText = $@"
+                    ALTER SESSION SET ""_ORACLE_SCRIPT"" = TRUE";
+                    await command.ExecuteNonQueryAsync();
+
+
+
+                    // El esquema no existe, lo creamos
+                    using (var commandCrearTablespace = new OracleCommand(crearTablespace, connection))
+                    {
+                        await commandCrearTablespace.ExecuteNonQueryAsync();
+                    }
+
+                    using (var commandCrearTablespaceTemp = new OracleCommand(crearTablespaceTemporal, connection))
+                    {
+                        await commandCrearTablespaceTemp.ExecuteNonQueryAsync();
+                    }
+
+                    using (var commandCrearUsuario = new OracleCommand(crearUsuario, connection))
+                    {
+                        await commandCrearUsuario.ExecuteNonQueryAsync();
+                    }
+
+                    using (var commandOtorgarPermisos = new OracleCommand(otorgarPermisos1, connection))
+                    {
+                        await commandOtorgarPermisos.ExecuteNonQueryAsync();
+                    }
+
+                    using (var commandOtorgarPermisos = new OracleCommand(otorgarPermisos2, connection))
+                    {
+                        await commandOtorgarPermisos.ExecuteNonQueryAsync();
+                    }
+
+                    using (var commandOtorgarPermisos = new OracleCommand(otorgarPermisos3, connection))
+                    {
+                        await commandOtorgarPermisos.ExecuteNonQueryAsync();
+                    }
+                }
+                Console.WriteLine("Esquema: " + esquemaExiste);
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }
