@@ -41,7 +41,21 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpPost]
+        [Route("API/Respaldos/RespaldarFull")]
+        public async Task<IActionResult> RespaldarFull()
+        {
+            ResBase res = await _controlRespaldos.RespaldarFull();
 
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
 
 
 

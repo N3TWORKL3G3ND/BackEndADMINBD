@@ -751,6 +751,60 @@ WHERE
 
 
 
+    public virtual async Task<string> RespaldarFullAsync()
+    {
+        // Generar un nombre preferente para el respaldo con fecha y hora
+        string nombreRespaldo = $"FULL_Respaldo_{DateTime.Now:yyyyMMdd_HHmmss}";
+
+        // Define la ruta donde se almacenará el respaldo
+        string rutaRespaldo = $@"C:\ADMINBD\RESPALDOS\{nombreRespaldo}";
+
+        // Crea el comando para ejecutar el respaldo
+        string comando = $@"expdp 'SYS/root123@localhost:1521/XE AS SYSDBA' FULL=Y directory=DATA_PUMP_DIR dumpfile={nombreRespaldo}.dmp logfile={nombreRespaldo}.log";
+
+
+
+        try
+        {
+            // Crea un proceso para ejecutar el comando expdp
+            var proceso = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $@"/C {comando}",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
+
+            // Inicia el proceso
+            proceso.Start();
+
+            // Lee la salida del proceso
+            string salida = await proceso.StandardOutput.ReadToEndAsync();
+            string errores = await proceso.StandardError.ReadToEndAsync();
+
+            // Espera a que el proceso finalice
+            await proceso.WaitForExitAsync();
+
+            // Verifica si hubo errores
+            if (proceso.ExitCode != 0)
+            {
+                return $"Error: {errores}";
+            }
+
+            return $"Respaldo COMPLETO de la base de datos fue creado exitosamente en '{rutaRespaldo}'.";
+        }
+        catch (Exception ex)
+        {
+            return $"Error: {ex.Message}";
+        }
+    }
+
+
 
 
 
