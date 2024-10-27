@@ -1,4 +1,5 @@
-﻿using Logica.Requests;
+﻿using Logica.Objets;
+using Logica.Requests;
 using Logica.Responses;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -90,7 +91,24 @@ namespace Logica.Models
 
 
 
+        public async Task<ResListarBase<string>> ListarTablasDePadron()
+        {
+            ResListarBase<string> res = new ResListarBase<string>();
 
+            try
+            {
+                res.datos = await _adminContext.ListarTablasDeEsquemaAsync("PADRON");
+                res.resultado = true;
+                res.detalle = "Tablas listadas correctamente.";
+            }
+            catch (Exception ex)
+            {
+                res.resultado = false;
+                res.errores.Add($"Error al listar las tablas: {ex.Message}");
+            }
+
+            return res;
+        }
 
 
 

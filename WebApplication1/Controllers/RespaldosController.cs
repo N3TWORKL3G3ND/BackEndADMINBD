@@ -1,4 +1,5 @@
 ﻿using Logica.Models;
+using Logica.Objets;
 using Logica.Requests;
 using Logica.Responses;
 using Microsoft.AspNetCore.Mvc;
@@ -59,7 +60,22 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpGet]
+        [Route("API/Respaldos/ListarTablasDePadron")]
+        public async Task<IActionResult> ListarTablasDePadron()
+        {
 
+            ResListarBase<string> res = await _controlRespaldos.ListarTablasDePadron();
+
+            if (res.resultado)
+            {
+                return Ok(res.datos);
+            }
+            else
+            {
+                return BadRequest(string.Join(", ", res.errores));
+            }
+        }
 
 
 

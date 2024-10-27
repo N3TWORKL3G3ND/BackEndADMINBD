@@ -806,6 +806,47 @@ WHERE
 
 
 
+    public virtual async Task<List<string>> ListarTablasDeEsquemaAsync(string nombreEsquema)
+    {
+        List<string> tablas = new List<string>();
+
+        string comando = $@"SELECT table_name FROM all_tables WHERE owner = '{nombreEsquema.ToUpper()}'";
+
+        using (var connection = new OracleConnection(_connectionString))
+        {
+            await connection.OpenAsync(); // Versión asíncrona para abrir la conexión
+
+            using (var command = new OracleCommand(comando, connection))
+            {
+                using (var reader = await command.ExecuteReaderAsync()) // Versión asíncrona del lector
+                {
+                    while (await reader.ReadAsync()) // Versión asíncrona para leer
+                    {
+                        tablas.Add(reader.GetString(0)); // Obtiene el nombre de la tabla
+                    }
+                }
+            }
+        }
+
+        return tablas;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
