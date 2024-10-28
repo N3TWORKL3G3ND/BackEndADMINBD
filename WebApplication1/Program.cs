@@ -1,5 +1,6 @@
 using Logica.Models;
 using Logica.Services;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,6 +44,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseRouting();
+
 
 // Configuración del pipeline HTTP
 if (app.Environment.IsDevelopment())

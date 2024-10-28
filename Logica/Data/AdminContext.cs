@@ -6,6 +6,7 @@ using Oracle.ManagedDataAccess.Client;  // Necesario para ODP.NET
 using System;
 using System.Data;
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -1235,6 +1236,58 @@ WHERE
 
 
 
+    public virtual async Task<string> GenerarPlanEjecucionAsync(string consulta)
+    {
+        // Comando SQL para generar el plan de ejecución
+        string comandoExplicacion = $@"EXPLAIN PLAN FOR {consulta}";
+
+        // Comando SQL para obtener el plan de ejecución
+        string comandoMostrarPlan = "SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY)";
+
+        try
+        {
+            using (var connection = new OracleConnection(_connectionString)) // Conexión a la base de datos
+            {
+                await connection.OpenAsync(); // Abre la conexión de forma asíncrona
+
+                Console.WriteLine(comandoExplicacion);
+                using (var command = new OracleCommand(comandoExplicacion, connection)) // Ejecuta el comando de explicación
+                {
+                    await command.ExecuteNonQueryAsync(); // Ejecuta la consulta para generar el plan
+                }
+                
+                using (var command = new OracleCommand(comandoMostrarPlan, connection)) // Prepara el comando para mostrar el plan
+                {
+                    using (var reader = await command.ExecuteReaderAsync()) // Lee los resultados de forma asíncrona
+                    {
+                        StringBuilder resultado = new StringBuilder();
+                        
+
+                        while (await reader.ReadAsync()) // Recorre los resultados
+                        {
+                            // Agrega cada fila del plan a la cadena de resultado
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                resultado.Append(reader[i].ToString() + " ");
+                            }
+                            resultado.AppendLine();
+                        }
+                        
+
+                        return resultado.ToString(); // Devuelve el plan de ejecución como cadena
+                    }
+                }
+            }
+        }
+        catch (OracleException ex)
+        {
+            throw new Exception($"Error al generar el plan de ejecución: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error inesperado: {ex.Message}");
+        }
+    }
 
 
 

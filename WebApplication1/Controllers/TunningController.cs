@@ -3,6 +3,7 @@ using Logica.Objets;
 using Logica.Requests;
 using Logica.Responses;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace BackEndADMINBD.Controllers
 {
@@ -58,6 +59,11 @@ namespace BackEndADMINBD.Controllers
         [Route("API/Tunning/EliminarIndice")]
         public async Task<IActionResult> EliminarIndice([FromBody] ReqBase req)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ningun campo puede estar vacío.");  // Devuelve errores si el JSON no contiene los campos correctos
+            }
+
             ResBase res = await _controlTunning.EliminarIndice(req);
 
             if (res.resultado)
@@ -76,6 +82,11 @@ namespace BackEndADMINBD.Controllers
         [Route("API/Tunning/CrearEstadisticasAIndice")]
         public async Task<IActionResult> CrearEstadisticasAIndice([FromBody] ReqBase req)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ningun campo puede estar vacío.");  // Devuelve errores si el JSON no contiene los campos correctos
+            }
+
             ResBase res = await _controlTunning.CrearEstadisticasAIndice(req);
 
             if (res.resultado)
@@ -95,6 +106,11 @@ namespace BackEndADMINBD.Controllers
         public async Task<IActionResult> ListarEstadisticasDeIndice([FromBody] ReqBase req)
         {
 
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ningun campo puede estar vacío.");  // Devuelve errores si el JSON no contiene los campos correctos
+            }
+
             ResListarBase<EstadisticaDto> res = await _controlTunning.ListarEstadisticasIndice(req);
 
             if (res.resultado)
@@ -109,7 +125,27 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpPost]
+        [Route("API/Tunning/GenerarPlanEjecucion")]
+        [SwaggerOperation(Summary = "Genera un plan de ejecución para una consulta SQL.")]
+        public async Task<IActionResult> GenerarPlanEjecucion([FromBody] ReqPlanEjecucion req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ningun campo puede estar vacío.");  // Devuelve errores si el JSON no contiene los campos correctos
+            }
 
+            ResBase res = await _controlTunning.GenerarPlanEjecucion(req);
+
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
 
 
 
