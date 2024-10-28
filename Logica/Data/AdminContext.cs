@@ -940,6 +940,57 @@ WHERE
 
 
 
+    public virtual async Task<string> RecuperarRespaldoTablaAsync(string nombreTabla, string nombreRespaldo)
+    {
+        // Define la ruta donde se encuentra el respaldo
+        string rutaRespaldo = $@"C:\ADMINBD\RESPALDOS\{nombreRespaldo}";
+
+        // Comando para ejecutar la recuperación del respaldo
+        string comandoRecuperacion = $@"impdp 'SYS/password@localhost:1521/XE AS SYSDBA' directory=DATA_PUMP_DIR dumpfile={nombreRespaldo} logfile=archivo_import.log tables=PADRON.{nombreTabla} table_exists_action=replace";
+
+
+        try
+        {
+            // Crea un proceso para ejecutar el comando impdp
+            var proceso = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $@"/C {comandoRecuperacion}",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
+
+            // Inicia el proceso
+            proceso.Start();
+
+            // Lee la salida del proceso
+            string salida = await proceso.StandardOutput.ReadToEndAsync();
+            string errores = await proceso.StandardError.ReadToEndAsync();
+
+            // Espera a que el proceso finalice
+            await proceso.WaitForExitAsync();
+
+            // Verifica si hubo errores
+            if (proceso.ExitCode != 0)
+            {
+                return $"Error: {errores}";
+            }
+
+            return $"La tabla '{nombreTabla}' fue recuperada exitosamente desde el respaldo '{nombreRespaldo}.dmp'.";
+        }
+        catch (Exception ex)
+        {
+            return $"Error: {ex.Message}";
+        }
+    }
+
+
+
 
 
 
