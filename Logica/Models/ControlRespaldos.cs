@@ -238,6 +238,40 @@ namespace Logica.Models
 
 
 
+        public async Task<ResBase> RecuperarRespaldoFull(ReqRecResFull req)
+        {
+            var res = new ResBase();
+
+            try
+            {
+                // Llamar al método que interactua con la base de datos
+                var resultado = await _adminContext.RecuperarRespaldoCompletoAsync(req.nombreArchivoRespaldo);
+
+                // Asignar los detalles a la respuesta
+                res.detalle = resultado; // Mensaje devuelto
+
+                // Verificar el resultado y asignar el estado correspondiente
+                if (resultado.Contains("Error"))
+                {
+                    res.resultado = false;
+                    res.errores.Add(res.detalle);
+                }
+                else
+                {
+                    res.resultado = true; // La operación fue exitosa
+                }
+            }
+            catch (Exception ex)
+            {
+                res.resultado = false;
+                res.errores.Add($"Error al procesar la solicitud: {ex.Message}");
+            }
+
+            return res;
+        }
+
+
+
 
 
 
