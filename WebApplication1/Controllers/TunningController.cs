@@ -53,7 +53,21 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpPost]
+        [Route("API/Tunning/EliminarIndice")]
+        public async Task<IActionResult> EliminarIndice([FromBody] ReqBase req)
+        {
+            ResBase res = await _controlTunning.EliminarIndice(req);
 
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
 
 
 

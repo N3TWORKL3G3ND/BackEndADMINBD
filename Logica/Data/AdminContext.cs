@@ -1106,6 +1106,34 @@ WHERE
 
 
 
+    public virtual async Task<string> EliminarIndiceAsync(string nombreIndice)
+    {
+        // Comando SQL para eliminar el índice
+        string comandoEliminar = $@"DROP INDEX {nombreIndice}";
+
+        try
+        {
+            using (var connection = new OracleConnection(_connectionString)) // Conexión a la base de datos
+            {
+                await connection.OpenAsync(); // Abre la conexión de forma asíncrona
+
+                using (var command = new OracleCommand(comandoEliminar, connection)) // Ejecuta el comando SQL
+                {
+                    await command.ExecuteNonQueryAsync(); // Ejecuta el comando de eliminación
+                }
+            }
+
+            return $"Índice '{nombreIndice}' eliminado exitosamente.";
+        }
+        catch (OracleException ex)
+        {
+            return $"Error al eliminar el índice: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            return $"Error inesperado: {ex.Message}";
+        }
+    }
 
 
 
