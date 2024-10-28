@@ -1053,7 +1053,7 @@ WHERE
 
         string comando = $@"
         SELECT index_name 
-        FROM user_indexes 
+        FROM all_indexes 
         WHERE table_name = '{nombreTabla.ToUpper()}'";
 
         using (var connection = new OracleConnection(_connectionString))
@@ -1081,7 +1081,7 @@ WHERE
     {
         // Comando para crear un índice en la columna CEDULA
         string comandoCrearIndice = @"
-        CREATE INDEX IDX_ALAJUELA_CEDULA 
+        CREATE INDEX PADRON.IDX_ALAJUELA_CEDULA 
         ON PADRON.ALAJUELA (CEDULA)";
 
         try
@@ -1109,7 +1109,7 @@ WHERE
     public virtual async Task<string> EliminarIndiceAsync(string nombreIndice)
     {
         // Comando SQL para eliminar el índice
-        string comandoEliminar = $@"DROP INDEX {nombreIndice}";
+        string comandoEliminar = $@"DROP INDEX PADRON.{nombreIndice}";
 
         try
         {
@@ -1134,6 +1134,110 @@ WHERE
             return $"Error inesperado: {ex.Message}";
         }
     }
+
+
+
+    public virtual async Task<string> CrearEstadisticasAIndiceAsync(string nombreIndice)
+    {
+        // Comando SQL para recolectar estadísticas del índice
+        string comandoCrearEstadisticas = $@"BEGIN 
+                                            DBMS_STATS.GATHER_INDEX_STATS('PADRON', '{nombreIndice}'); 
+                                         END;";
+
+        try
+        {
+            using (var connection = new OracleConnection(_connectionString)) // Conexión a la base de datos
+            {
+                await connection.OpenAsync(); // Abre la conexión de forma asíncrona
+
+                // Alterar la sesion
+                var command1 = connection.CreateCommand();
+                command1.CommandText = $@"
+                ALTER SESSION SET ""_ORACLE_SCRIPT"" = TRUE";
+                await command1.ExecuteNonQueryAsync();
+
+                using (var command = new OracleCommand(comandoCrearEstadisticas, connection)) // Ejecuta el comando SQL
+                {
+                    await command.ExecuteNonQueryAsync(); // Ejecuta el comando de generación de estadísticas
+                }
+            }
+
+            return $"Estadísticas creadas exitosamente para el índice '{nombreIndice}'.";
+        }
+        catch (OracleException ex)
+        {
+            return $"Error al crear las estadísticas para el índice: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            return $"Error inesperado: {ex.Message}";
+        }
+    }
+
+
+
+    public virtual async Task<List<EstadisticaDto>> ListarEstadisticasIndiceAsync(string nombreIndice)
+    {
+        List<EstadisticaDto> estadisticas = new List<EstadisticaDto>();
+
+        // Comando SQL para obtener las estadísticas del índice
+        string comandoListarEstadisticas = $@"
+        SELECT 
+            index_name,
+            num_rows,
+            leaf_blocks AS bloques,
+            table_owner AS duenno_de_tabla,
+            last_analyzed
+        FROM 
+            all_ind_statistics 
+        WHERE 
+            owner = 'PADRON' 
+            AND index_name = '{nombreIndice.ToUpper()}'";
+
+        try
+        {
+            using (var connection = new OracleConnection(_connectionString)) // Conexión a la base de datos
+            {
+                await connection.OpenAsync(); // Abre la conexión de forma asíncrona
+
+                using (var command = new OracleCommand(comandoListarEstadisticas, connection)) // Ejecuta el comando SQL
+                {
+                    using (var reader = await command.ExecuteReaderAsync()) // Lee los resultados de forma asíncrona
+                    {
+                        while (await reader.ReadAsync()) // Recorre los resultados
+                        {
+                            EstadisticaDto estadistica = new EstadisticaDto
+                            {
+                                NombreIndice = reader["index_name"].ToString()!, // Cambiado para reflejar que es un índice
+                                NumeroFilas = reader["num_rows"] != DBNull.Value ? Convert.ToInt32(reader["num_rows"]) : 0,
+                                Bloques = reader["bloques"] != DBNull.Value ? Convert.ToInt32(reader["bloques"]) : 0,
+                                DuennoDeTabla = reader["duenno_de_tabla"].ToString()!,
+                                UltimoAnalisis = reader["last_analyzed"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(reader["last_analyzed"]) : null
+                            };
+
+                            estadisticas.Add(estadistica);
+                        }
+                    }
+                }
+            }
+
+            return estadisticas;
+        }
+        catch (OracleException ex)
+        {
+            throw new Exception($"Error al listar las estadísticas: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error inesperado: {ex.Message}");
+        }
+    }
+
+
+
+
+
+
 
 
 

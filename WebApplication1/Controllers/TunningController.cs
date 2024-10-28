@@ -1,4 +1,5 @@
 ﻿using Logica.Models;
+using Logica.Objets;
 using Logica.Requests;
 using Logica.Responses;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ namespace BackEndADMINBD.Controllers
 
 
         [HttpGet]
-        [Route("API/Tunning/ListarIndicesDePadron")]
+        [Route("API/Tunning/ListarIndicesDeAlajuela")]
         public async Task<IActionResult> ListarIndicesDeAlajuela()
         {
 
@@ -71,8 +72,40 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpPost]
+        [Route("API/Tunning/CrearEstadisticasAIndice")]
+        public async Task<IActionResult> CrearEstadisticasAIndice([FromBody] ReqBase req)
+        {
+            ResBase res = await _controlTunning.CrearEstadisticasAIndice(req);
+
+            if (res.resultado)
+            {
+                return Ok(res.detalle);
+            }
+            else
+            {
+                return BadRequest(res.detalle);
+            }
+        }
 
 
+        
+        [HttpPost]
+        [Route("API/Tunning/ListarEstadisticasDeIndice")]
+        public async Task<IActionResult> ListarEstadisticasDeIndice([FromBody] ReqBase req)
+        {
+
+            ResListarBase<EstadisticaDto> res = await _controlTunning.ListarEstadisticasIndice(req);
+
+            if (res.resultado)
+            {
+                return Ok(res.datos);
+            }
+            else
+            {
+                return BadRequest(string.Join(", ", res.errores));
+            }
+        }
 
 
 
