@@ -1041,9 +1041,68 @@ WHERE
 
 
 
+    //======================================
+    //===============TUNNING================
+    //======================================
 
 
 
+    public virtual async Task<List<string>> ListarIndicesDeUsuarioAsync(string nombreTabla)
+    {
+        List<string> indices = new List<string>();
+
+        string comando = $@"
+        SELECT index_name 
+        FROM user_indexes 
+        WHERE table_name = '{nombreTabla.ToUpper()}'";
+
+        using (var connection = new OracleConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+
+            using (var command = new OracleCommand(comando, connection))
+            {
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        indices.Add(reader.GetString(0)); // Obtiene el nombre del índice
+                    }
+                }
+            }
+        }
+
+        return indices;
+    }
+
+
+
+    public virtual async Task<string> GenerarIndiceALAJUELAAsync()
+    {
+        // Comando para crear un índice en la columna CEDULA
+        string comandoCrearIndice = @"
+        CREATE INDEX IDX_ALAJUELA_CEDULA 
+        ON PADRON.ALAJUELA (CEDULA)";
+
+        try
+        {
+            using (var connection = new OracleConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                using (var command = new OracleCommand(comandoCrearIndice, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+
+            return "Índice creado exitosamente en la tabla ALAJUELA.";
+        }
+        catch (Exception ex)
+        {
+            return $"Error al crear el índice: {ex.Message}";
+        }
+    }
 
 
 

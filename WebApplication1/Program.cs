@@ -32,6 +32,9 @@ builder.Services.AddScoped<ControlRespaldos>();
 // Registra el servicio FileService
 builder.Services.AddScoped<FileService>();
 
+// Registra el servicio ControlTunning
+builder.Services.AddScoped<ControlTunning>();
+
 // Agregar servicios al contenedor.
 builder.Services.AddControllers();
 
