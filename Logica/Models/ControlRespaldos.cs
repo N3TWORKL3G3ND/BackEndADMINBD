@@ -1,6 +1,7 @@
 ﻿using Logica.Objets;
 using Logica.Requests;
 using Logica.Responses;
+using Logica.Services;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -14,11 +15,13 @@ namespace Logica.Models
     {
         private readonly AdminContext _adminContext;
         private readonly IConfiguration _configuration;
+        private readonly FileService _fileService;
 
-        public ControlRespaldos(IConfiguration configuration, AdminContext adminContext)
+        public ControlRespaldos(IConfiguration configuration, AdminContext adminContext, FileService fileService)
         {
             _configuration = configuration;
             _adminContext = adminContext;
+            _fileService = fileService;
         }
 
 
@@ -180,7 +183,24 @@ namespace Logica.Models
 
 
 
+        public async Task<ResListarBase<string>> ListarArchivosDmp()
+        {
+            ResListarBase<string> res = new ResListarBase<string>();
 
+            try
+            {
+                res.datos = await _fileService.ListarArchivosDmpAsync();
+                res.resultado = true;
+                res.detalle = "Nombres de archivos listados correctamente.";
+            }
+            catch (Exception ex)
+            {
+                res.resultado = false;
+                res.errores.Add($"Error al listar los nombres de archivos: {ex.Message}");
+            }
+
+            return res;
+        }
 
 
 

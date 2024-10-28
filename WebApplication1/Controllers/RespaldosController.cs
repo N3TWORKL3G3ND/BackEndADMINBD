@@ -115,7 +115,22 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpGet]
+        [Route("API/Respaldos/ListarNombresDeArchivosDmp")]
+        public async Task<IActionResult> ListarNombresDeArchivosDmp()
+        {
 
+            ResListarBase<string> res = await _controlRespaldos.ListarArchivosDmp();
+
+            if (res.resultado)
+            {
+                return Ok(res.datos);
+            }
+            else
+            {
+                return BadRequest(string.Join(", ", res.errores));
+            }
+        }
 
 
 

@@ -892,7 +892,7 @@ WHERE
         string rutaRespaldo = $@"C:\ADMINBD\RESPALDOS\{nombreRespaldo}";
 
         // Comando para ejecutar la recuperación del respaldo
-        string comandoRecuperacion = $@"impdp 'SYS/root123@localhost:1521/XE AS SYSDBA' schemas={nombreEsquema} directory=DATA_PUMP_DIR dumpfile={nombreRespaldo}.dmp logfile=RECUPERACION_{nombreEsquema}.log";
+        string comandoRecuperacion = $@"impdp 'SYS/root123@localhost:1521/XE AS SYSDBA' schemas={nombreEsquema} directory=DATA_PUMP_DIR dumpfile={nombreRespaldo} logfile=RECUPERACION_{nombreEsquema}.log";
 
         
         try

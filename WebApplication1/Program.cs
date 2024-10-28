@@ -1,4 +1,5 @@
 using Logica.Models;
+using Logica.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +28,9 @@ builder.Services.AddScoped<ControlSeguridadUsuarios>();
 
 // Registra el servicio ControlRespaldos
 builder.Services.AddScoped<ControlRespaldos>();
+
+// Registra el servicio FileService
+builder.Services.AddScoped<FileService>();
 
 // Agregar servicios al contenedor.
 builder.Services.AddControllers();
