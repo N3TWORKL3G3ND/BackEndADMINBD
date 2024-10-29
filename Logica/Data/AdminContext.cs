@@ -1291,6 +1291,222 @@ WHERE
 
 
 
+    public async Task<string> ActivarAuditoriaAsync()
+    {
+        try
+        {
+            // Comando para activar la auditoría en la base de datos
+            string comandoActivarAuditoria = @"
+            ALTER SYSTEM SET audit_trail = 'DB' SCOPE=SPFILE";
+
+            string comandoActivarAuditoria2 = @"
+            ALTER SYSTEM SET audit_sys_operations = TRUE SCOPE=SPFILE";
+
+            using (var connection = new OracleConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                // Activar la auditoría
+                using (var command = new OracleCommand(comandoActivarAuditoria, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+
+                using (var command = new OracleCommand(comandoActivarAuditoria2, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+
+            }
+
+            return "Auditoría activada. Proceda a reiniciar la base de datos.";
+        }
+        catch (OracleException ex)
+        {
+            return $"Error al activar la auditoría: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            return $"Error inesperado: {ex.Message}";
+        }
+    }
+
+
+
+    public async Task<string> ReiniciarBaseDatosAsync()
+    {
+        string resultado = string.Empty;
+
+        // Comando que deseas ejecutar
+        string comandoRecuperacion = "sqlplus / as sysdba";
+
+        // El comando SQL que deseas ejecutar
+        string sqlCommands = "SHUTDOWN IMMEDIATE;";
+
+        // El comando SQL que deseas ejecutar
+        string sqlCommands2 = "STARTUP;";
+
+        // Crea un proceso para ejecutar sqlplus
+        var proceso = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = "/C echo " + sqlCommands + " | " + comandoRecuperacion,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            }
+        };
+
+        // Crea un proceso para ejecutar sqlplus
+        var proceso2 = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = "/C echo " + sqlCommands2 + " | " + comandoRecuperacion,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            }
+        };
+
+        // Inicia el proceso y espera a que termine
+        proceso.Start();
+
+        // Lee la salida estándar
+        resultado = await proceso.StandardOutput.ReadToEndAsync();
+        string error = await proceso.StandardError.ReadToEndAsync();
+
+        // Espera a que el proceso termine
+        proceso.WaitForExit();
+
+        // Inicia el proceso y espera a que termine
+        proceso2.Start();
+
+        // Lee la salida estándar
+        resultado = await proceso2.StandardOutput.ReadToEndAsync();
+        error = await proceso2.StandardError.ReadToEndAsync();
+
+        // Espera a que el proceso termine
+        proceso2.WaitForExit();
+
+        // Verifica si hay algún error
+        if (!string.IsNullOrEmpty(error))
+        {
+            return $"Error al reiniciar la base de datos: {error}";
+        }
+
+        return resultado;
+    }
+
+
+
+    public virtual async Task<List<AuditoriaDto>> ComprobarEstadoAuditoriaAsync()
+    {
+        List<AuditoriaDto> auditorias = new List<AuditoriaDto>();
+
+        // Comando SQL para obtener el estado de la auditoría y otros parámetros relacionados
+        string comandoEstadoAuditoria = @"
+        SELECT 
+            name AS parametro,
+            value AS estado,
+            description AS descripcion
+        FROM 
+            v$parameter 
+        WHERE 
+            name IN ('audit_trail', 'audit_sys_operations', 'audit_trail')
+    ";
+
+        try
+        {
+            using (var connection = new OracleConnection(_connectionString)) // Conexión a la base de datos
+            {
+                await connection.OpenAsync(); // Abre la conexión de forma asíncrona
+
+                using (var command = new OracleCommand(comandoEstadoAuditoria, connection)) // Ejecuta el comando SQL
+                {
+                    using (var reader = await command.ExecuteReaderAsync()) // Lee los resultados
+                    {
+                        while (await reader.ReadAsync()) // Recorre los resultados
+                        {
+                            AuditoriaDto auditoria = new AuditoriaDto
+                            {
+                                Parametro = reader["parametro"].ToString()!, // Cambiado para reflejar que es un índice
+                                Estado = reader["estado"].ToString()!,
+                                Descripcion = reader["descripcion"].ToString()!
+                                
+                            };
+                            auditorias.Add(auditoria);
+                        }
+                    }
+                }
+            }
+        }
+        catch (OracleException ex)
+        {
+            throw new Exception($"Error al comprobar el estado de la auditoría: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error inesperado: {ex.Message}");
+        }
+
+        return auditorias;
+    }
+
+
+
+    public virtual async Task<string> DesactivarAuditoriaAsync()
+    {
+        string comandoDesactivarAuditoria = @"ALTER SYSTEM SET audit_trail = 'NONE' SCOPE=SPFILE";
+
+        string comandoDesactivarAuditoria2 = @"ALTER SYSTEM SET audit_sys_operations = FALSE SCOPE=SPFILE";
+
+        try
+        {
+            using (var connection = new OracleConnection(_connectionString)) // Conexión a la base de datos
+            {
+                await connection.OpenAsync(); // Abre la conexión de forma asíncrona
+
+                using (var command = new OracleCommand(comandoDesactivarAuditoria, connection)) // Prepara el comando
+                {
+                    // Ejecuta el comando para desactivar la auditoría
+                    await command.ExecuteNonQueryAsync();
+                }
+
+                using (var command = new OracleCommand(comandoDesactivarAuditoria2, connection)) // Prepara el comando
+                {
+                    // Ejecuta el comando para desactivar la auditoría
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+
+            return "Auditoría desactivada correctamente. Proceda a reiniciar la base de datos.";
+        }
+        catch (OracleException ex)
+        {
+            return $"Error al desactivar la auditoría: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            return $"Error inesperado: {ex.Message}";
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

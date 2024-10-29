@@ -36,6 +36,9 @@ builder.Services.AddScoped<FileService>();
 // Registra el servicio ControlTunning
 builder.Services.AddScoped<ControlTunning>();
 
+// Registra el servicio ControlTunning
+builder.Services.AddScoped<ControlAuditoria>();
+
 // Agregar servicios al contenedor.
 builder.Services.AddControllers();
 
