@@ -1,4 +1,5 @@
-﻿using Logica.Responses;
+﻿using Logica.Objets;
+using Logica.Responses;
 using Logica.Services;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -57,7 +58,7 @@ namespace Logica.Models
 
 
 
-        public async Task<ResListarBase<string>> ObtenerInformacionSesion()
+        public async Task<ResListarBase<string>> ObtenerInformacionConexionesActuales()
         {
             ResListarBase<string> res = new ResListarBase<string>();
 
@@ -78,7 +79,24 @@ namespace Logica.Models
 
 
 
+        public async Task<ResListarBase<TablespaceInfoDto>> ObtenerUsoTablespace()
+        {
+            ResListarBase<TablespaceInfoDto> res = new ResListarBase<TablespaceInfoDto>();
 
+            try
+            {
+                res.datos = await _adminContext.ObtenerUsoTablespaceAsync();
+                res.resultado = true;
+                res.detalle = "informacion listada correctamente.";
+            }
+            catch (Exception ex)
+            {
+                res.resultado = false;
+                res.errores.Add($"Error al listar la informacion: {ex.Message}");
+            }
+
+            return res;
+        }
 
 
 

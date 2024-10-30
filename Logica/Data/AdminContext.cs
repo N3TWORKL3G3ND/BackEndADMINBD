@@ -1593,6 +1593,64 @@ WHERE
 
 
 
+    public async Task<List<TablespaceInfoDto>> ObtenerUsoTablespaceAsync()
+    {
+        List<TablespaceInfoDto> listaTablespace = new List<TablespaceInfoDto>();
+
+        string consulta = @"
+        SELECT tablespace_name,
+                ROUND(SUM(bytes) / 1024 / 1024, 2) AS used_mb,
+                ROUND(MAX(bytes) / 1024 / 1024, 2) AS total_mb,
+                ROUND((MAX(bytes) - SUM(bytes)) / 1024 / 1024, 2) AS free_mb,
+                ROUND((SUM(bytes) / MAX(bytes)) * 100, 2) AS pct_used
+        FROM dba_data_files
+        GROUP BY tablespace_name
+        ORDER BY pct_used DESC";
+
+        try
+        {
+            using (OracleConnection conexion = new OracleConnection(_connectionString))
+            {
+                await conexion.OpenAsync();
+                using (OracleCommand comando = new OracleCommand(consulta, conexion))
+                using (OracleDataReader lector = await comando.ExecuteReaderAsync())
+                {
+                    while (await lector.ReadAsync())
+                    {
+                        TablespaceInfoDto infoTablespace = new TablespaceInfoDto
+                        {
+                            TablespaceName = lector.GetString(0),
+                            UsedMb = lector.GetDecimal(1),
+                            TotalMb = lector.GetDecimal(2),
+                            FreeMb = lector.GetDecimal(3),
+                            PctUsed = lector.GetDecimal(4)
+                        };
+
+                        listaTablespace.Add(infoTablespace);
+                    }
+                }
+            }
+        }
+        catch (OracleException ex)
+        {
+            // Manejo de errores específico de Oracle, por ejemplo, loguear el error
+            Console.WriteLine($"Error de Oracle: {ex.Message}");
+            // Puedes lanzar una excepción personalizada si es necesario
+            throw new ApplicationException("Ocurrió un error al obtener el uso del tablespace.", ex);
+        }
+        catch (Exception ex)
+        {
+            // Manejo de errores genérico
+            Console.WriteLine($"Error general: {ex.Message}");
+            throw new ApplicationException("Ocurrió un error inesperado al obtener el uso del tablespace.", ex);
+        }
+
+        return listaTablespace;
+    }
+
+
+
+
 
 
 

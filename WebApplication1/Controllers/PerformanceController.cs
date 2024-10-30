@@ -1,4 +1,5 @@
 ﻿using Logica.Models;
+using Logica.Objets;
 using Logica.Responses;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,11 +35,30 @@ namespace BackEndADMINBD.Controllers
 
 
         [HttpGet]
-        [Route("API/Performance/ObtenerInformacionDeSesionesActuales")]
-        public async Task<IActionResult> ObtenerInformacionDeSesionesActuales()
+        [Route("API/Performance/ObtenerInformacionConexionesActuales")]
+        public async Task<IActionResult> ObtenerInformacionConexionesActuales()
         {
 
-            ResListarBase<string> res = await _controlPerformance.ObtenerInformacionSesion();
+            ResListarBase<string> res = await _controlPerformance.ObtenerInformacionConexionesActuales();
+
+            if (res.resultado)
+            {
+                return Ok(res.datos);
+            }
+            else
+            {
+                return BadRequest(string.Join(", ", res.errores));
+            }
+        }
+
+
+
+        [HttpGet]
+        [Route("API/Performance/ObtenerUsoTablespace")]
+        public async Task<IActionResult> ObtenerUsoTablespace()
+        {
+
+            ResListarBase<TablespaceInfoDto> res = await _controlPerformance.ObtenerUsoTablespace();
 
             if (res.resultado)
             {
