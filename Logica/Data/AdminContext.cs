@@ -1500,9 +1500,49 @@ WHERE
 
 
 
+    //======================================
+    //=============PERFORMANCE==============
+    //======================================
 
 
 
+    public async Task<string> ObtenerVersionCompatibleAsync()
+    {
+        string resultado = string.Empty;
+
+        // Comando SQL para consultar el valor del parámetro "compatible"
+        string consultaCompatible = "SELECT value FROM v$system_parameter WHERE name = 'compatible'";
+
+        try
+        {
+            using (var connection = new OracleConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                using (var command = new OracleCommand(consultaCompatible, connection))
+                {
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            // Obtiene el valor del parámetro "compatible"
+                            resultado = reader["value"].ToString() ?? "Valor no encontrado";
+                        }
+                    }
+                }
+            }
+        }
+        catch (OracleException ex)
+        {
+            resultado = $"Error al obtener la versión compatible: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            resultado = $"Error inesperado: {ex.Message}";
+        }
+
+        return resultado;
+    }
 
 
 
