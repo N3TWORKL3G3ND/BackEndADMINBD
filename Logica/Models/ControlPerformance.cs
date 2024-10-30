@@ -57,6 +57,48 @@ namespace Logica.Models
 
 
 
+        public async Task<ResListarBase<string>> ObtenerInformacionSesion()
+        {
+            ResListarBase<string> res = new ResListarBase<string>();
+
+            try
+            {
+                res.datos = await _adminContext.ObtenerInformacionSesionAsync();
+                res.resultado = true;
+                res.detalle = "Informacion obtenida correctamente.";
+            }
+            catch (Exception ex)
+            {
+                res.resultado = false;
+                res.errores.Add($"Error al obtener la informacion: {ex.Message}");
+            }
+
+            return res;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1546,6 +1546,50 @@ WHERE
 
 
 
+    public async Task<List<string>> ObtenerInformacionSesionAsync()
+    {
+        // Lista para almacenar el resultado
+        var resultado = new List<string>();
+
+        // Consulta SQL para obtener la información de sesión
+        string consultaSesion = @"
+        SELECT osuser, username, machine, program
+        FROM v$session
+        WHERE program NOT LIKE 'ORACLE.EXE (%)'
+        ORDER BY osuser";
+
+        try
+        {
+            using (var connection = new OracleConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                using (var command = new OracleCommand(consultaSesion, connection))
+                {
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            // Construye una cadena con la información de cada fila
+                            string sesionInfo = $"OS User: {reader["osuser"]}, Username: {reader["username"]}, " +
+                                                $"Machine: {reader["machine"]}, Program: {reader["program"]}";
+                            resultado.Add(sesionInfo);
+                        }
+                    }
+                }
+            }
+        }
+        catch (OracleException ex)
+        {
+            resultado.Add($"Error al obtener la información de sesión: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            resultado.Add($"Error inesperado: {ex.Message}");
+        }
+
+        return resultado;
+    }
 
 
 

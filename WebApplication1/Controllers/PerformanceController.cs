@@ -33,6 +33,23 @@ namespace BackEndADMINBD.Controllers
 
 
 
+        [HttpGet]
+        [Route("API/Performance/ObtenerInformacionDeSesionesActuales")]
+        public async Task<IActionResult> ObtenerInformacionDeSesionesActuales()
+        {
+
+            ResListarBase<string> res = await _controlPerformance.ObtenerInformacionSesion();
+
+            if (res.resultado)
+            {
+                return Ok(res.datos);
+            }
+            else
+            {
+                return BadRequest(string.Join(", ", res.errores));
+            }
+        }
+
 
 
 
